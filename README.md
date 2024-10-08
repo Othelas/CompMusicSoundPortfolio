@@ -5,4 +5,4 @@
 
 #### Portfolio Overview:
 
-- [Engineering Notebook]()
+- [Engineering Notebook](https://github.com/Othelas/CompMusicSoundPortfolio/blob/main/Notebook.md)
