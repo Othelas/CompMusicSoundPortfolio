@@ -10,7 +10,7 @@ Created CompMusicSoundPortfolio repository.
 
 ### 10-13-2024
 
-**HW1 Clipped:** Using python, scipy.io.wav and numpy to generate and directly play a clipped sin wave.
+**HW1 Clipped:** Using python, scipy.io.wav and numpy to generate and directly play a clipped sin wave. - [HW1 Clipped](https://github.com/Othelas/CompMusicSoundPortfolio/tree/main/HW1_Clipped)
 
 Setup:
 
@@ -26,7 +26,8 @@ Initially pushed clipped.py: Generates and saves a simple sine wav similar to wh
 
 **Side quest:** Completed introduction in Zulip.
 
-**HW1 Cont.**
+**HW1 Cont.** - [HW1 Clipped](https://github.com/Othelas/CompMusicSoundPortfolio/tree/main/HW1_Clipped)
+
 Refactored clipped.py to define function:
 
 `create_sine_wave(sample_rate, frequency, duration, amplitude)`.
@@ -45,7 +46,7 @@ For the homework we created a half-amplitude sine wave, values in the range -163
 
 ### 10-17-2024
 
-**HW1 Cont.**
+**HW1 Cont.** - [HW1 Clipped](https://github.com/Othelas/CompMusicSoundPortfolio/tree/main/HW1_Clipped)
 
 Using `sounddevice` we can play the clipped waveform directly to our machines audio ouput.
 
