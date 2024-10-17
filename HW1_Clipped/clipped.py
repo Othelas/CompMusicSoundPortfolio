@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.io.wavfile as wav
+import sounddevice as sd
 
 # Generates a sine wave with the given parameters.
 # Parameters:
@@ -7,7 +8,6 @@ import scipy.io.wavfile as wav
 # - frequency (float): Frequency of the sine wave in Hz
 # - duration (float): Duration of the sine wave in seconds
 # - amplitude (int): Amplitude of the sine wave (max value for 16-bit signed integer is 32767)
-
 def create_sine_wave(sample_rate, frequency, duration, amplitude):
 
     # Generate time values
@@ -22,6 +22,20 @@ def create_sine_wave(sample_rate, frequency, duration, amplitude):
     # Return sine wave as a numpy array of 16-bit integers
     return sine_wave_int16
 
+
+# Play the input wave directly using sounddevice.
+# Parameters:
+# - waveform: Numpy array of 16-bit signed integers (sine wave).
+# - sample_rate: The sample rate (e.g., 48000).
+def play_wave(waveform, sample_rate):
+
+    # Play the sine wave using sounddevice
+    sd.play(waveform, samplerate=sample_rate)
+    
+    # Wait until the sound is finished playing
+    sd.wait()
+
+
 # Create and save the normal sine wave
 sine_wave = create_sine_wave(48000, 440, 1, 8192)
 wav.write("sine.wav", 48000, sine_wave)
@@ -33,3 +47,5 @@ sine_wave_clipped = np.clip(sine_wave_half_amplitude, -8192, 8192)
 wav.write("clipped.wav", 48000, sine_wave_clipped)
 print("Clipped sine wave written to clipped.wav")
 
+# Play the clipped wave
+play_wave(sine_wave_clipped, 48000)

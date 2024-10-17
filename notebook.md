@@ -42,3 +42,19 @@ We can now call this function to generate our sine wave with the desired attribu
 For the clipped wave I created the sine wave using our defined function and then used np.clip(), a function from the numpy library that clips the values in an array to a specified range.
 
 For the homework we created a half-amplitude sine wave, values in the range -16384 and 16384 for signed 16 bit audio. We can use `np.clip(sine_wave_half_amplitude, -8192, 8192)` to clip our sinewave at -8192 and 8192.
+
+### 10-17-2024
+
+**HW1 Cont.**
+
+Using `sounddevice` we can play the clipped waveform directly to our machines audio ouput.
+
+**Useful Docs**
+
+- [sounddevice.play()](https://python-sounddevice.readthedocs.io/en/0.5.1/api/convenience-functions.html#sounddevice.play)
+
+- [sounddevice.wait()](https://python-sounddevice.readthedocs.io/en/0.5.1/api/convenience-functions.html#sounddevice.wait)
+
+**Note**
+
+If you don’t specify the correct sampling rate to `sounddevice.play()` (either with the samplerate argument or by assigning a value to default.samplerate), the audio data will be played back, but it might be too slow or too fast!
