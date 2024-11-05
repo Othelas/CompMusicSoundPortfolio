@@ -4,6 +4,38 @@ Note: Most recent items are first.
 
 ---
 
+### 11-05-2024
+
+**Portfolio Project Ideation**
+
+Castlevania style melody generator! Using 8-bit style synthesizer (aka Chiptune) code, create an application that generates Castlevania style melodies.
+
+**Theory(?)**
+
+Most retro Castlevania game music uses a musical concept called counter-point melodies. This is very common in Bach, as a calssical example, and in fact some Castlevania songs are directly based off Bach compositions.
+
+A very simple explanation of counter-point in our context is to create two melodies in the same key or even the same chord and in the same time signature. Then those two melodies are combined to pla over the top of one another.
+
+**Possible inputs:**
+
+- **Key** (melody A, melody B)
+- **Chord** (melody A, melody B)
+- **Melody Type** (melody A, melody B)
+
+  - ascending, descending, undulating, pendulum, tile, terrace, or cascading.
+
+- **Melody Style** (melody A, melody B)
+
+  - Monotone: A flat melody with one or two notes
+  - Legato: Sustained notes that transition smoothly
+  - Staccato: Notes that are not sustained and have sudden stops
+  - Jumping: Lines with large note gaps
+  - Casual: Lines that are sung lazily, slightly off, or with an essence of speaking
+  - Call and response: Common in duets or for creating echo effects
+  - Chord-based: Melodies based on chord tones
+  - Scale-based: Melodies made up of notes within a particular scale or mode
+  - Direction: Melodies that don't come back to the same pitch over and over again
+
 ### 11-02-2024
 
 **HW2 Adaptive Tone Control**
