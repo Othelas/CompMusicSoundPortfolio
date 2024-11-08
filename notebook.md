@@ -1,6 +1,39 @@
-#### Jesse M. Ellis - Engineering Notebook - PSU Fall Term 2024
+#### Jesse M. Ellis - Engineering Notebook
 
-Note: Most recent items are first.
+#### Computers, Music and Sound - PSU Fall Term 2024
+
+###### Note: Most recent items are first.
+
+---
+
+### 11-07-2924
+
+**Portfolio Project - Create a square wave.**
+
+**What?**
+We need an 8-bit square wave to create the retro sound of classic game systems.
+
+**How?**
+An 8-bit wave carries integer values from 0-255. To simulate the sound of an old system we will use a lower samplel rate, 16k samples per second.
+
+```
+import numpy as np
+import sounddevice as sd
+
+# define settings for 8-bit sound
+SAMPLE_RATE = 16000  # lower sample rate for retro sound (16 kHz)
+DURATION = 0.25      # duration of each note in seconds
+
+# Generate a square wave for 8-bit sound
+def generate_wave(freq, duration, sample_rate):
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    waveform = 0.5 * np.sign(np.sin(2 * np.pi * freq * t))
+
+    # Convert to 8-bit integer range [0, 255]
+    waveform = ((waveform + 1) * 127.5).astype(np.uint8)
+    return waveform
+
+```
 
 ---
 
@@ -12,9 +45,9 @@ Castlevania style melody generator! Using 8-bit style synthesizer (aka Chiptune)
 
 **Theory(?)**
 
-Most retro Castlevania game music uses a musical concept called counter-point melodies. This is very common in Bach, as a calssical example, and in fact some Castlevania songs are directly based off Bach compositions.
+Most retro Castlevania game music uses a musical concept called counter-point melodies. This is very common in Bach, as a classical example, and in fact some Castlevania songs are directly based off Bach compositions.
 
-A very simple explanation of counter-point in our context is to create two melodies in the same key or even the same chord and in the same time signature. Then those two melodies are combined to pla over the top of one another.
+A very simple explanation of counter-point for our context is to create two melodies in the same key or the same chord and in the same time signature. Then those two melodies are combined to pla over the top of one another.
 
 **Possible inputs:**
 
@@ -35,6 +68,8 @@ A very simple explanation of counter-point in our context is to create two melod
   - Chord-based: Melodies based on chord tones
   - Scale-based: Melodies made up of notes within a particular scale or mode
   - Direction: Melodies that don't come back to the same pitch over and over again
+
+---
 
 ### 11-02-2024
 
