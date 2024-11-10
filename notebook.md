@@ -6,6 +6,47 @@
 
 ---
 
+### 11-10-2024
+
+The user should be able to choose what key to generate melodies in. We'll define all fourth octave major keys and then we can move octaves as needed. We can also use the relative minor of each key, e.g. the relative minor of C major (c,d,e,f,g,a,b) is A minor (a,b,c,d,e,f,g).
+
+**Key Definitions**
+
+- C_MAJOR = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]
+- C_SHARP_MAJOR = [277.18, 311.13, 349.23, 369.99, 415.30, 466.16, 523.25, 554.37]
+- D_MAJOR = [293.66, 329.63, 369.99, 392.00, 440.00, 493.88, 554.37, 587.33]
+- E_FLAT_MAJOR = [311.13, 349.23, 392.00, 415.30, 466.16, 523.25, 587.33, 622.25]
+- E_MAJOR = [329.63, 369.99, 415.30, 440.00, 493.88, 554.37, 622.25, 659.26]
+- F_MAJOR = [349.23, 392.00, 440.00, 466.16, 523.25, 587.33, 659.26, 698.46]
+- F_SHARP_MAJOR = [369.99, 415.30, 466.16, 493.88, 554.37, 622.25, 698.46, 739.99]
+- G_MAJOR = [392.00, 440.00, 493.88, 523.25, 587.33, 659.26, 739.99, 783.99]
+- A_FLAT_MAJOR = [415.30, 466.16, 523.25, 554.37, 622.25, 698.46, 783.99, 830.61]
+- A_MAJOR = [440.00, 493.88, 554.37, 587.33, 659.26, 739.99, 830.61, 880.00]
+- B_FLAT_MAJOR = [466.16, 523.25, 587.33, 622.25, 698.46, 783.99, 880.00, 932.33]
+- B_MAJOR = [493.88, 554.37, 622.25, 659.26, 739.99, 830.61, 932.33, 987.77]
+
+**Playing Melodies**
+
+Ultimately we want to play melodies so we should figure out how to play a sequence of notes and add the to the whole output waveform. To start we'll use an array of note fequency values in the Key of C major (middle C).
+
+Key of C major: C D E F G A B C
+
+C_MAJOR = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88 ,523.25]
+
+```
+def play_notes(key, duration, sample_rate):
+    full_wave = np.array([], dtype=np.uint8)
+    for note in key:
+        wave = generate_wave(note, duration, sample_rate)
+        full_wave = np.concatenate((full_wave, wave))
+        sd.play(wave.astype(np.float32) / 255.0 * 2 - 1, samplerate=sample_rate)
+        time.sleep(0.1)
+        sd.wait()
+    return full_wave
+```
+
+---
+
 ### 11-07-2924
 
 **Portfolio Project - Create a square wave.**
