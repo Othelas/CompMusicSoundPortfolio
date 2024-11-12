@@ -6,7 +6,39 @@
 
 ---
 
+### 11-11-2024
+
+**Portfolio Project - Random Melody**
+
+Given an input key and the number of notes lets create a meldoy from random notes in the key.
+
+```
+def generate_random_melody(key, length):
+    return [random.choice(key) for _ in range(length)]
+```
+
+**Portfolio Project - Relative Minor**
+
+Rather than list out all the frequencies for the minor keys we'll use a mthod to calculate the relative minor to each major. The relative minor to each major starts at the 6th note of the major scale and then ascends to the next notes through the key. sort of like shifting the list of notes such that the 6th note is now at the beginning of the list and the rest have looped around to keep the same sequence.
+
+e.g. A minor (A4,B4,C5,D5,E5,F5,G5) is relative to C major (C4,D4,E4,F4,G4,A4,B4).
+
+To keep the notes ascending we will copy the major notes starting with the 6th and 7th then we will append that list with notes 1 to 5 but double the frequencies such that they are an octave higher.
+
+```
+def relative_minor_scale(major_scale):
+    # The relative minor starts from the 6th note of the major scale
+    minor_start_index = 5
+    # Generate the relative minor scale by shifting notes
+    minor_scale = major_scale[minor_start_index:] + [freq * 2 for freq in major_scale[:minor_start_index]]
+    return minor_scale
+```
+
+---
+
 ### 11-10-2024
+
+**Portfolio Project - Note Keys**
 
 The user should be able to choose what key to generate melodies in. We'll define all fourth octave major keys and then we can move octaves as needed. We can also use the relative minor of each key, e.g. the relative minor of C major (c,d,e,f,g,a,b) is A minor (a,b,c,d,e,f,g).
 
