@@ -6,6 +6,88 @@
 
 ---
 
+### 11-14-2024
+
+**Chromatic Shifter**
+
+Let's give the user the ability to shift keys up or down by octaves. The difference between the current octave and the next is double (or half depending on direction) of the current octave.
+
+E.g. A4 (440Hz) -> A5 (880Hz) -> A6(1760Hz) .. etc.
+
+Our method to shift the octave can simply double or halve the input frequencies depening on wether the user wants to shift up or down.
+
+```
+def octave_shift(current_key, shift):
+    # Get shift factor - 0 shift will return original key octave
+    shift_factor = 2*abs(shift)
+    shifted_key = []
+    # Shift note frequencies up
+    if shift > 0:
+        for note in current_key:
+            note *= shift_factor
+            shifted_key += [note]
+        return shifted_key
+    # Shift note frequencies down
+    elif shift < 0:
+        for note in current_key:
+            note /= shift_factor
+            shifted_key += [note]
+        return shifted_key
+    return current_key
+```
+
+### 11-12-2024
+
+**Portfolio Project - A better key generator**
+
+At first I decided to hard code all major 4th octave keys and then use a method to find the relative minor to get minor keys. I am thinking a better way to do this would be to generate any major/minor key based n user input from the chromatic scale.
+
+What is the chromatic scale? The chromatic scale consists of all 12 half and whole step notes from a given note. Let's start with middle C (C4) and end an octave higher. We'll define it as a list of (note, frequency) tuples so that we can associate note names with frequencies.
+
+```
+CHROMATIC_SCALE = [
+    ('C4', 261.63),
+    ('C#4/Db4', 277.18),
+    ('D4', 293.66),
+    ('D#4/Eb4', 311.13),
+    ('E4', 329.63),
+    ('F4', 349.23),
+    ('F#4/Gb4', 369.99),
+    ('G4', 392.00),
+    ('G#4/Ab4', 415.30),
+    ('A4', 440.00),
+    ('A#4/Bb4', 466.16),
+    ('B4', 493.88),
+    ('C5', 523.25)
+]
+
+```
+
+From this we can derive all major and minor keys by the step pattern. Let 2 (two notes up) be a whole step and 1 (one note up) be a half step. The final step gets to the next octave.
+
+- Major Key Steps: [ 2, 2, 1, 2, 2, 2, 1 ]
+- Minor Key Steps: [ 2, 1, 2, 2, 1, 2, 2 ]
+
+**Example:** Find the Major and Minor keys in C4. Using the pattern and chromatic scale we get:
+
+```
+C_MAJOR = {
+    'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23,
+    'G4': 392.00, 'A4': 440.00, 'B4': 493.88, 'C5': 523.25
+}
+
+C_MINOR = {
+    'C4': 261.63, 'D4': 293.66, 'Eb4': 311.13, 'F4': 349.23,
+    'G4': 392.00, 'Ab4': 415.30, 'Bb4': 466.16, 'C5': 523.25
+}
+
+```
+
+Now we need a method to get the key based on an input string key name.
+(see EightBiterator.py -> generate_scale() )
+
+---
+
 ### 11-11-2024
 
 **Portfolio Project - Random Melody**
