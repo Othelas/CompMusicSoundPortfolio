@@ -14,10 +14,11 @@ A retro game music generator - (work in progress)
 # define settings for  8-bit sound
 SAMPLE_RATE = 16000  # lower sample rate for retro sound (16 kHz)
 BPM = 60       # duration of each note in seconds
-BAR = 4
-SHIFT = 1
-KEY = "c_major"
-LOOPS = 4
+BAR = 8
+SHIFT = -2
+KEY = "d_minor"
+LOOPS = 2
+NPB = 4
 
 # Chromatic scale - we will generate keys from this.
 # Define the chromatic scale as a list of tuples in ascending order
@@ -99,6 +100,10 @@ def calculate_note_length(bpm):
 
 # Generate 8-bit square wave
 def generate_wave(freq, duration, sample_rate):
+    # rest note
+    if freq == 0:
+        return np.zeros(int(sample_rate * duration), dtype=np.uint8)
+    # tonal note
     t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
     waveform = 0.5 * np.sign(np.sin(2 * np.pi * freq * t))
     
@@ -122,12 +127,16 @@ def play_notes(key, duration, sample_rate, loops):
     return full_wave
 
 
-def generate_random_melody(key, length):
-    # return melody note list starting with the first note in the list
-    # this preserves the "tone" of the key.
+def generate_random_melody(key, length, npb):
+    # Calculate tonal notes and rests and build note list
+    rest_notes = length - npb
+    notes_with_rests = key + [0] * rest_notes
+
+    # initialize melody starting with root note
     melody = [key[0]]
-    # randomize the rest of the notes
-    melody += [random.choice(key) for _ in range(length - 1)]
+
+    # Randomize the rest of the melody
+    melody += [random.choice(notes_with_rests) for _ in range(length - 1)]
     return melody
 
 def save_wave(key, shift, sample_rate, waveform):
@@ -136,10 +145,14 @@ def save_wave(key, shift, sample_rate, waveform):
     file_name = key + octave + "_melody_" + date + ".wav"
     write(file_name, sample_rate, waveform)
 
+# Validate that NPB is less than or equal to BAR
+if NPB > BAR:
+    raise ValueError(f"NPB (Notes Per Bar) cannot be greater than BAR. Got NPB={NPB} and BAR={BAR}.")
+
 # Testing 
 key_scale = generate_scale(KEY)
 shifted_key_scale = octave_shift(key_scale, SHIFT)
-melody = generate_random_melody(shifted_key_scale, BAR)
+melody = generate_random_melody(shifted_key_scale, BAR, NPB)
 duration = calculate_note_length(BPM)
 waveform = play_notes(melody, duration, SAMPLE_RATE, LOOPS)
 sd.wait()

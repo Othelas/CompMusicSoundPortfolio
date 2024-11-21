@@ -6,6 +6,41 @@
 
 ---
 
+### 11-21-2024
+
+**Portfolio Project - More params**
+
+These are the hard ones.. **Style** and **Notes per Bar (npb)**. Let's figure out npb first.
+
+To accomplish this we can create "rest" notes in place of "tonal" notes. Say if we have 16 beats in a bar and we want 8 notes per bar then our melody generator should generate 8 tonal notes and 8 rest notes.
+
+How do we generate a rest note? We need to be able to add it to the final waveform so it should still be a waverform but what does a rest waveform look like?
+
+**Rest Note** Easy enough... generate a zero frequency note
+
+```
+if freq == 0:
+    return np.zeros(int(sample_rate * duration), dtype=np.uint8)
+```
+
+**npb** A little trickier but essentially we need to calculat ethe difference between the number of note per bar and the bar length to find the number of rests. Once we have this we create an array of length npb with notes from the key and add an array of 0 frequencies. Then randomize the total array.
+
+```
+def generate_random_melody(key, length, npb):
+    # Calculate tonal notes and rests and build note list
+    rest_notes = length - npb
+    notes_with_rests = key + [0] * rest_notes
+
+    # initialize melody starting with root note
+    melody = [key[0]]
+
+    # Randomize the rest of the melody
+    melody += [random.choice(notes_with_rests) for _ in range(length - 1)]
+    return melody
+```
+
+---
+
 ### 11-19-2024
 
 **Portfolio Project - Melody Parameters**
