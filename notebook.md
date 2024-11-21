@@ -26,16 +26,19 @@ if freq == 0:
 **npb** A little trickier but essentially we need to calculat ethe difference between the number of note per bar and the bar length to find the number of rests. Once we have this we create an array of length npb with notes from the key and add an array of 0 frequencies. Then randomize the total array.
 
 ```
+
+* Edited: The last version was calculating the reversing the number of tonal notes and rests. This is the refactored method that does it right.
+
 def generate_random_melody(key, length, npb):
     # Calculate tonal notes and rests and build note list
     rest_notes = length - npb
-    notes_with_rests = key + [0] * rest_notes
-
-    # initialize melody starting with root note
-    melody = [key[0]]
-
-    # Randomize the rest of the melody
-    melody += [random.choice(notes_with_rests) for _ in range(length - 1)]
+    # Randomize the rest of the tonal notes
+    melody = [random.choice(key) for _ in range(npb - 1)]
+    # shuffle in rest notes
+    melody += [0] * rest_notes
+    random.shuffle(melody)
+    # insert root
+    melody.insert(0, key[0])
     return melody
 ```
 

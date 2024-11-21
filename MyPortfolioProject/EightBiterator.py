@@ -4,6 +4,7 @@ from scipy.io.wavfile import write
 import time
 import random
 from datetime import datetime
+import math
 
 """
 Jesse M. Ellis - EightBiterator
@@ -13,12 +14,12 @@ A retro game music generator - (work in progress)
 
 # define settings for  8-bit sound
 SAMPLE_RATE = 16000  # lower sample rate for retro sound (16 kHz)
-BPM = 60       # duration of each note in seconds
+BPM = 96       # duration of each note in seconds
 BAR = 8
-SHIFT = -2
-KEY = "d_minor"
-LOOPS = 2
-NPB = 4
+SHIFT = -3
+KEY = "bflat_minor"
+LOOPS = 4
+NPB = 5
 
 # Chromatic scale - we will generate keys from this.
 # Define the chromatic scale as a list of tuples in ascending order
@@ -34,8 +35,7 @@ CHROMATIC_SCALE = [
     ('G#4/Ab4', 415.30),
     ('A4', 440.00),
     ('A#4/Bb4', 466.16),
-    ('B4', 493.88),
-    ('C5', 523.25)
+    ('B4', 493.88)
 ]
 
 # Define major and minor scale intervals (W = Whole, H = Half)
@@ -58,23 +58,26 @@ def generate_scale(key_name):
     # find the root note index in the chromatic scale
     root_index = None
     for idx, (note, _) in enumerate(CHROMATIC_SCALE):
-        if note.startswith(root_note):
+        if root_note in note:
             root_index = idx
             break
     
     # Generate the scale using the major or minor pattern
     scale_notes = []
     current_index = root_index
+    root_frequency = CHROMATIC_SCALE[current_index][1]
     for step in pattern:
-        scale_notes.append(CHROMATIC_SCALE[current_index][1])  # Add frequency to the list
+        # double frequency for notes beyond the original range (go to next octave)
+        if (current_index == root_index):
+            scale_notes.append(CHROMATIC_SCALE[current_index][1])
+        else:
+            if (root_frequency >= CHROMATIC_SCALE[current_index][1]):
+                scale_notes.append(CHROMATIC_SCALE[current_index][1] * 2)
+            else:
+                scale_notes.append(CHROMATIC_SCALE[current_index][1]) 
+                 
         current_index = (current_index + step) % len(CHROMATIC_SCALE)
-    
-    # double frequency for notes beyond the original range (go to next octave)
-    if current_index < root_index:
-        scale_notes.append(CHROMATIC_SCALE[current_index][1] * 2)
-    else:
-        scale_notes.append(CHROMATIC_SCALE[current_index][1])
-    
+        
     return scale_notes
 
 def octave_shift(current_key, shift):
@@ -91,7 +94,7 @@ def octave_shift(current_key, shift):
     elif shift < 0:
         for note in current_key:
             note /= shift_factor
-            shifted_key += [note]
+            shifted_key += [math.trunc(note*100)/100]
         return shifted_key
     return current_key
 
@@ -130,13 +133,13 @@ def play_notes(key, duration, sample_rate, loops):
 def generate_random_melody(key, length, npb):
     # Calculate tonal notes and rests and build note list
     rest_notes = length - npb
-    notes_with_rests = key + [0] * rest_notes
-
-    # initialize melody starting with root note
-    melody = [key[0]]
-
-    # Randomize the rest of the melody
-    melody += [random.choice(notes_with_rests) for _ in range(length - 1)]
+    # Randomize the rest of the tonal notes
+    melody = [random.choice(key) for _ in range(npb - 1)]
+    # shuffle in rest notes
+    melody += [0] * rest_notes
+    random.shuffle(melody)
+    # insert root
+    melody.insert(0, key[0])
     return melody
 
 def save_wave(key, shift, sample_rate, waveform):
