@@ -14,14 +14,17 @@ A retro game music generator - (work in progress)
 
 # define settings for  8-bit sound
 SAMPLE_RATE = 16000  # lower sample rate for retro sound (16 kHz)
-BPM = 96       # duration of each note in seconds
+BPM = 120       # duration of each note in seconds
 BAR = 8
-SHIFT = -3
-KEY = "bflat_minor"
+SHIFT1 = 0
+SHIFT2 = -3
+KEY1 = "gsharp_minor"
+KEY2 = "gsharp_minor"
 LOOPS = 4
-NPB = 5
+NPB1 = 7
+NPB2 = 4
 
-# Chromatic scale - we will generate keys from this.
+# Chromatic scale from C4 - we will generate keys from this.
 # Define the chromatic scale as a list of tuples in ascending order
 CHROMATIC_SCALE = [
     ('C4', 261.63),
@@ -108,26 +111,27 @@ def generate_wave(freq, duration, sample_rate):
         return np.zeros(int(sample_rate * duration), dtype=np.uint8)
     # tonal note
     t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
-    waveform = 0.5 * np.sign(np.sin(2 * np.pi * freq * t))
+    waveform = 0.2 * np.sign(np.sin(2 * np.pi * freq * t))
     
     # Convert to 8-bit integer range [0, 255]
     waveform = ((waveform + 1) * 127.5).astype(np.uint8)
     return waveform
 
-def play_notes(key, duration, sample_rate, loops):
+def create_melody_waveform(key, duration, sample_rate, loops):
     full_wave = np.array([], dtype=np.uint8)
     for note in key:
         wave = generate_wave(note, duration, sample_rate)
         full_wave = np.concatenate((full_wave, wave))
-        # sd.play(wave.astype(np.float32) / 255.0 * 2 - 1, samplerate=sample_rate)
-        # sd.wait()
         time.sleep(0.1)
     
     # repeat the melody over loops
     full_wave = np.tile(full_wave, loops)
-    sd.play(full_wave.astype(np.float32) / 255.0 * 2 - 1, samplerate=sample_rate)
-    sd.wait()
     return full_wave
+
+def play_wave(waveform, sample_rate):
+    sd.play(waveform.astype(np.float32) / 255.0 * 2 - 1, samplerate=sample_rate)
+    sd.wait()
+    return
 
 
 def generate_random_melody(key, length, npb):
@@ -142,6 +146,15 @@ def generate_random_melody(key, length, npb):
     melody.insert(0, key[0])
     return melody
 
+def add_waves(wave1, wave2):
+    # convert waves to prevent overflow
+    added_wave = wave1.astype(np.int16) + wave2.astype(np.int16)
+    # Normalize to the 8-bit range [0, 255]
+    min_val = added_wave.min()
+    max_val = added_wave.max()
+    normalized_wave = (added_wave - min_val) / (max_val - min_val) * 255
+    return normalized_wave.astype(np.uint8)
+
 def save_wave(key, shift, sample_rate, waveform):
     octave = str(4 + shift)
     date = str(datetime.now())
@@ -149,15 +162,36 @@ def save_wave(key, shift, sample_rate, waveform):
     write(file_name, sample_rate, waveform)
 
 # Validate that NPB is less than or equal to BAR
-if NPB > BAR:
-    raise ValueError(f"NPB (Notes Per Bar) cannot be greater than BAR. Got NPB={NPB} and BAR={BAR}.")
+if NPB1 > BAR:
+    raise ValueError(f"NPB (Notes Per Bar) cannot be greater than BAR. Got NPB={NPB1} and BAR={BAR}.")
 
-# Testing 
-key_scale = generate_scale(KEY)
-shifted_key_scale = octave_shift(key_scale, SHIFT)
-melody = generate_random_melody(shifted_key_scale, BAR, NPB)
-duration = calculate_note_length(BPM)
-waveform = play_notes(melody, duration, SAMPLE_RATE, LOOPS)
+if NPB2 > BAR:
+    raise ValueError(f"NPB (Notes Per Bar) cannot be greater than BAR. Got NPB={NPB2} and BAR={BAR}.")
+
+# Generate melody 1
+key_scale1 = generate_scale(KEY1)
+shifted_key_scale1 = octave_shift(key_scale1, SHIFT1)
+melody1 = generate_random_melody(shifted_key_scale1, BAR, NPB1)
+duration1 = calculate_note_length(BPM)
+wave1 = create_melody_waveform(melody1, duration1, SAMPLE_RATE, LOOPS)
+play_wave(wave1, SAMPLE_RATE)
 sd.wait()
-save_wave(KEY, SHIFT, SAMPLE_RATE, waveform)
+
+# Generate melody 2
+key_scale2 = generate_scale(KEY2)
+shifted_key_scale2 = octave_shift(key_scale2, SHIFT2)
+melody2 = generate_random_melody(shifted_key_scale2, BAR, NPB2)
+duration2 = calculate_note_length(BPM)
+wave2 = create_melody_waveform(melody2, duration2, SAMPLE_RATE, LOOPS)
+play_wave(wave2, SAMPLE_RATE)
+sd.wait()
+
+# Combine melodies
+waveform = add_waves(wave1, wave2)
+play_wave(waveform, SAMPLE_RATE)
+
+# Save
+save_wave(KEY1, SHIFT1, SAMPLE_RATE, waveform)
+
+
 

@@ -8,6 +8,31 @@
 
 ### 11-21-2024
 
+**Portfolio Project - Adding waves**
+
+Ultimately we want to create two melodies and add them. First let's start with a straight add..
+
+```
+def add_waves(wave1, wave2):
+    added_wave = wave1 + wave2
+    return added_wave
+```
+
+This is resulting in a lot of clipping when notes from each waveform overlap.. we needs some way to adjust the waveform for this.
+
+The reason this sounds crunchy is because we are adding to uint8 waves which can cause overflow. We can convert each to uint16 while we add and then normalize the waves once combined. The following has a little crunch still but is waayyyy better.
+
+```
+def add_waves(wave1, wave2):
+    # convert waves to prevent overflow
+    added_wave = wave1.astype(np.int16) + wave2.astype(np.int16)
+    # Normalize to the 8-bit range [0, 255]
+    min_val = added_wave.min()
+    max_val = added_wave.max()
+    normalized_wave = (added_wave - min_val) / (max_val - min_val) * 255
+    return normalized_wave.astype(np.uint8)
+```
+
 **Portfolio Project - More params**
 
 These are the hard ones.. **Style** and **Notes per Bar (npb)**. Let's figure out npb first.
