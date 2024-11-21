@@ -3,6 +3,7 @@ import sounddevice as sd
 from scipy.io.wavfile import write
 import time
 import random
+from datetime import datetime
 
 """
 Jesse M. Ellis - EightBiterator
@@ -12,7 +13,11 @@ A retro game music generator - (work in progress)
 
 # define settings for  8-bit sound
 SAMPLE_RATE = 16000  # lower sample rate for retro sound (16 kHz)
-DURATION = 0.5       # duration of each note in seconds
+BPM = 60       # duration of each note in seconds
+BAR = 4
+SHIFT = 1
+KEY = "c_major"
+LOOPS = 4
 
 # Chromatic scale - we will generate keys from this.
 # Define the chromatic scale as a list of tuples in ascending order
@@ -89,6 +94,9 @@ def octave_shift(current_key, shift):
         return shifted_key
     return current_key
 
+def calculate_note_length(bpm):
+    return 60/bpm
+
 # Generate 8-bit square wave
 def generate_wave(freq, duration, sample_rate):
     t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
@@ -98,15 +106,21 @@ def generate_wave(freq, duration, sample_rate):
     waveform = ((waveform + 1) * 127.5).astype(np.uint8)
     return waveform
 
-def play_notes(key, duration, sample_rate):
+def play_notes(key, duration, sample_rate, loops):
     full_wave = np.array([], dtype=np.uint8)
     for note in key:
         wave = generate_wave(note, duration, sample_rate)
         full_wave = np.concatenate((full_wave, wave))
-        sd.play(wave.astype(np.float32) / 255.0 * 2 - 1, samplerate=sample_rate)
-        sd.wait()
+        # sd.play(wave.astype(np.float32) / 255.0 * 2 - 1, samplerate=sample_rate)
+        # sd.wait()
         time.sleep(0.1)
+    
+    # repeat the melody over loops
+    full_wave = np.tile(full_wave, loops)
+    sd.play(full_wave.astype(np.float32) / 255.0 * 2 - 1, samplerate=sample_rate)
+    sd.wait()
     return full_wave
+
 
 def generate_random_melody(key, length):
     # return melody note list starting with the first note in the list
@@ -116,24 +130,18 @@ def generate_random_melody(key, length):
     melody += [random.choice(key) for _ in range(length - 1)]
     return melody
 
-# def relative_minor_scale(major_scale):
-#     # The relative minor starts from the 6th note of the major scale
-#     minor_start_index = 5
-#     # generate the relative minor scale by shifting notes
-#     minor_scale = major_scale[minor_start_index:] + [freq * 2 for freq in major_scale[:minor_start_index]]
-#     return minor_scale
+def save_wave(key, shift, sample_rate, waveform):
+    octave = str(4 + shift)
+    date = str(datetime.now())
+    file_name = key + octave + "_melody_" + date + ".wav"
+    write(file_name, sample_rate, waveform)
 
 # Testing 
-# A_MINOR = relative_minor_scale(C_MAJOR)
-# melody = generate_random_melody(A_MINOR, 16)
-melody_key = "a_minor"
-key_scale = generate_scale(melody_key)
-shifted_key_scale = octave_shift(key_scale, -3)
-melody = generate_random_melody(shifted_key_scale, 16)
-
-waveform = play_notes(melody, DURATION, SAMPLE_RATE)
+key_scale = generate_scale(KEY)
+shifted_key_scale = octave_shift(key_scale, SHIFT)
+melody = generate_random_melody(shifted_key_scale, BAR)
+duration = calculate_note_length(BPM)
+waveform = play_notes(melody, duration, SAMPLE_RATE, LOOPS)
 sd.wait()
-#write("a_minor_melody.wav", SAMPLE_RATE, waveform)
-file_name = melody_key + "_shifted_down3_melody.wav"
-write(file_name, SAMPLE_RATE, waveform)
+save_wave(KEY, SHIFT, SAMPLE_RATE, waveform)
 

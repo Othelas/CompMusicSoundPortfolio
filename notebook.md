@@ -6,9 +6,46 @@
 
 ---
 
+### 11-19-2024
+
+**Portfolio Project - Melody Parameters**
+
+We should give the user some parameters to choose when creating their melody.
+
+- **key1**: Specify the key for the first melody.
+  Our code is already set up for this. :thumbs_up:
+- **key2**: Specify the key for the second melody.
+  The second key should be selected to compliment the first. Or not if you want something discordent.
+- **shift1**: Specify the octave shift for the first melody. Our app calculates key frequencies starting at C4 (middle C) chromatic scale.
+  Shift the melody up or down octaves. e.g. -2 goes down two octaves. 3 goes up three octaves.
+- **shift2**: Specify the octave shift for the second melody.
+  It is nice to choose octaves that are spaced apart.
+- **style1**: Specify the style of the first melody.
+  For now I think we will do mountain, ascending, descending or random.
+  - Mountain: Notes make their way up and then back down the scale.
+  - Ascending: Notes make their way up the scale.
+  - Descending: Notes make their way down the scale.
+  - Random: Notes are randomized over the key scale.
+- **style2**: Specify the style of the second melody.
+  If we choose ascending for the first melody it might sound cool to choose descending for the second.
+  **bar**: Number of beats in a bar.
+  This will control the number of beats in one bar.
+  E.g. bar = 16 will be a melody generated with 16 notes.
+  If the melody is set to loop, the bar is what will be looped.
+- **bpm**: Specify the number of beats per minute.
+  This will control how fast the melody is played by setting the note length. All notes will be of the same length. Longer notes are created by repeating the same note over a number of beats.
+- **npb1**: Specify the number of notes per bar for the first melody.
+  How many notes should the melody have within the bar. Beats that do not have a note will use "blank note" that has a zero amplitude and frequncy.
+- **npb2**: Specify the number of notes per bar for the second melody.
+  We could specify a bass melody with a ow number of notes and treble melody with a lot of notes.
+- **loops**: Specify the number of times the melody should loop.
+  How many times would you like the melody to repeat?
+
+---
+
 ### 11-14-2024
 
-**Chromatic Shifter**
+**Portfolio Project - Octave Shifter**
 
 Let's give the user the ability to shift keys up or down by octaves. The difference between the current octave and the next is double (or half depending on direction) of the current octave.
 
