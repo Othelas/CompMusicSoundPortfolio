@@ -6,6 +6,10 @@
 
 ---
 
+**Next time** new save, attribute file, running with arguments
+
+---
+
 ### 11-21-2024
 
 **Portfolio Project - Adding waves**

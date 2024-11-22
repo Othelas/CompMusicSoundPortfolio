@@ -1,0 +1,11 @@
+Attributes used in your melody:
+
+key1: Am
+key2: Dm
+shift1: 0
+shift2: -2
+bpm: 450
+bar: 16
+loops: 4
+npb1: 12
+npb2: 8
