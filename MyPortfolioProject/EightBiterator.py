@@ -25,6 +25,10 @@ VALID_KEYS = {
     "C#m", "Dbm", "Dm", "D#m", "Ebm", "Em", "Fm", "F#m", 
     "Gbm", "Gm", "G#m", "Abm", "Am", "A#m", "Bbm", "Bm"
 }
+# valid style names
+VALID_STYLES = {
+    "random", "linear", "ascending", "descending", "mountain"
+}
 
 # Chromatic scale from C4 - we will generate keys from this.
 CHROMATIC_SCALE = [
@@ -94,7 +98,6 @@ def generate_wave(freq, duration):
         return np.zeros(int(SAMPLE_RATE * duration), dtype=np.uint8)
     t = np.linspace(0, duration, int(SAMPLE_RATE * duration), endpoint=False)
     waveform = 0.5 * np.sign(np.sin(2 * np.pi * freq * t))
-    # waveform -= np.mean(waveform)
     waveform = ((waveform + 1) * 127.5).astype(np.uint8)
     return waveform
 
@@ -119,11 +122,68 @@ def play_wave(waveform, singular_wave):
     sd.play(scaled_waveform, samplerate=SAMPLE_RATE)
     sd.wait()
 
-def generate_random_melody(key, length, npb):
+def generate_melody(key, length, npb, style):
     rest_notes = length - npb
-    melody = [random.choice(key) for _ in range(npb - 1)]
-    melody += [0] * rest_notes
-    random.shuffle(melody)
+    melody = []
+    current_index = 0
+    double_octave_key = key + octave_shift(key, 1)
+    double_octave_key_reverse = double_octave_key[::-1]
+
+    if style == "random":
+        melody = [random.choice(key) for _ in range(npb - 1)]
+    
+    elif style == "linear":
+        root_note_occurence = math.trunc(npb*0.75)
+        melody = [random.choice(key) for _ in range(npb - root_note_occurence)]
+        melody += [key[0]] * root_note_occurence
+        random.shuffle(melody)
+        if len(melody) == npb:
+            melody = melody[:-1]
+    
+    elif style == "ascending":
+        for i in range(npb - 1):
+            if i % 2 == 0:
+                melody.append(double_octave_key[current_index % len(double_octave_key)])
+                current_index += 1
+            else:
+                melody.append(random.choice(key))
+    
+    elif style == "descending":
+        for i in range(npb - 1):
+            if i % 2 == 0:
+                melody.append(double_octave_key_reverse[current_index % len(double_octave_key_reverse)])
+                current_index += 1
+            else:
+                melody.append(random.choice(key))
+    
+    elif style == "mountain":
+        half_a_npb = math.trunc(npb*0.5)
+        half_b_npb = npb - half_a_npb
+        for i in range(half_a_npb):
+            if i % 2 == 0:
+                melody.append(double_octave_key[current_index % len(double_octave_key)])
+                current_index += 1
+            else:
+                melody.append(random.choice(key))
+        key_reversed = key[::-1]
+        current_index = 0
+        for i in range(half_b_npb):
+            if i % 2 == 0:
+                melody.append(double_octave_key_reverse[current_index % len(double_octave_key_reverse)])
+                current_index += 1
+            else:
+                melody.append(random.choice(key))
+        if len(melody) == npb:
+            melody = melody[:-1]
+    
+    # randomly insert rests
+    tonal_notes = melody[:]
+    melody = tonal_notes
+    for _ in range(rest_notes):
+        insert_pos = random.randint(0, len(melody))
+        melody.insert(insert_pos, 0)
+
+    # insert root
     melody.insert(0, key[0])
     return melody
 
@@ -187,16 +247,19 @@ if __name__ == "__main__":
     NOTE on key input. 
     Input format is \"G#m\" as in G sharp minor, \"Bb\" as in B flat major, etc..
     If you only specify key1 then key2 will be the same hey.
+    
     You can also try the default by not specifying any attributes ;)""" )
     parser.add_argument("--key1", type=str, default="G#m", help="Default: G#m | Key for melody 1.")
     parser.add_argument("--key2", help="Default: G#m | Key for melody 2.")
+    parser.add_argument("--style1", type=str, default="random", help="Default: random | styles: random, linear, ascending, descending, mountain.")
+    parser.add_argument("--style2", type=str, default="random", help="Default: random | Choose melody style.")
     parser.add_argument("--shift1", type=int, default=0, help="Default: 0 | Octave shift from middle (4) for melody 1.")
     parser.add_argument("--shift2", type=int, default=-3, help="Default: -3 | Octave shift from middle (4) for melody 2.")
-    parser.add_argument("--bpm", type=int, default=240, help="Default: 240 | Beats per minute.")
+    parser.add_argument("--bpm", type=int, default=350, help="Default: 350 | Beats per minute.")
     parser.add_argument("--bar", type=int, default=32, help="Default: 32 | Number of beats in a bar.")
-    parser.add_argument("--loops", type=int, default=2, help="Default: 2 | Number of times the bar should loop.")
+    parser.add_argument("--loops", type=int, default=3, help="Default: 3 | Number of times the bar should loop.")
     parser.add_argument("--npb1", type=int, default=24, help="Default: 24 | Notes per bar for melody 1.")
-    parser.add_argument("--npb2", type=int, default=8, help="Default: 8 | Notes per bar for melody 2.")
+    parser.add_argument("--npb2", type=int, default=16, help="Default: 16 | Notes per bar for melody 2.")
     
     args = parser.parse_args()
 
@@ -214,29 +277,40 @@ if __name__ == "__main__":
     if args.key2 not in VALID_KEYS:
         raise ValueError(f"Invalid key '{args.key2}'. Must be one of these: {', '.join(sorted(VALID_KEYS))}.")
 
+    if args.style1 not in VALID_STYLES:
+        raise ValueError(f"Invalid style '{args.style1}'. Must be one of these: {', '.join(sorted(VALID_STYLES))}.")
     
+    if args.style2 not in VALID_STYLES:
+        raise ValueError(f"Invalid style '{args.style2}'. Must be one of these: {', '.join(sorted(VALID_STYLES))}.")
+    
+    print("\nMelody attributes:")
+    print(f"\n     Melody 1 - Key: {args.key1} | Style: {args.style1} | Octave Shift: {args.shift1} | NPB: {args.npb1}")
+    print(f"\n     Melody 2 - Key: {args.key2} | Style: {args.style2} | Octave Shift: {args.shift2} | NPB: {args.npb2}")
+    print(f"\n     BPM: {args.bpm} | BAR: {args.bar} | Loops: {args.loops}")
+
+
     # generate first melody
     key_scale1 = octave_shift(generate_scale(args.key1), args.shift1)
-    melody1 = generate_random_melody(key_scale1, args.bar, args.npb1)
+    melody1 = generate_melody(key_scale1, args.bar, args.npb1, args.style1)
     print("\n")
-    clear_line_and_print("Baking melody...5")
+    clear_line_and_print("Preparing melody 1...")
     wave1 = create_melody_waveform(melody1, calculate_note_length(args.bpm), args.loops)
-    clear_line_and_print("Baking melody...4")
+    clear_line_and_print("Generating melody 1...")
     play_wave(wave1, 1)
 
     # generate second melody
     key_scale2 = octave_shift(generate_scale(args.key2), args.shift2)
-    melody2 = generate_random_melody(key_scale2, args.bar, args.npb2)
-    clear_line_and_print("Baking melody...3")
+    melody2 = generate_melody(key_scale2, args.bar, args.npb2, args.style2)
+    clear_line_and_print("Preparing melody 2...")
     wave2 = create_melody_waveform(melody2, calculate_note_length(args.bpm), args.loops)
-    clear_line_and_print("Baking melody...2")
+    clear_line_and_print("Generating melody 2...")
     play_wave(wave2, 1)
 
     # add melodies
-    clear_line_and_print("Baking melody...1")
+    clear_line_and_print("Mixing melodies... ")
     waveform = add_waves(wave1, wave2)
     play_wave(waveform, 0)
-    clear_line_and_print("Baking melody...DING!\n")
+    clear_line_and_print("Retro Melody... DONE!\n")
 
     # prompt save
     attributes = get_attributes(args)

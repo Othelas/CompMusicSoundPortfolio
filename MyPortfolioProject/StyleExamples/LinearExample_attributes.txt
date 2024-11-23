@@ -1,0 +1,13 @@
+Attributes used in your melody:
+
+key1: G#m
+key2: G#m
+style1: linear
+style2: random
+shift1: 0
+shift2: -3
+bpm: 350
+bar: 32
+loops: 3
+npb1: 24
+npb2: 16

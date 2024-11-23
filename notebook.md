@@ -6,7 +6,45 @@
 
 ---
 
-**Next time** new save, attribute file, running with arguments
+### 11-23-2024
+
+**Portfolio Project**
+
+**Firstly** - Over the last few days I entered serious flow state ultra zen mode and added a bunch stuff inlcuding new save functionality, generating an attribute file, running with arguments, a ton of refactoring.. etc. Unfortunatley I couldn't be bothered with stopping to document so it is what it is.
+
+**Secondly** - I figured out a good way to implement some of the styles I wanted to give the user. See function `generate_melody(key, length, npb, style)` We have the following:
+
+- _Random_ - specifying this style will simply randomly choose the notes from the given key to create the melody.
+- _Linear_ - specifying thi style will generate melodies mostly (75%) consisting of the root note, with other random notes sprinkled in.
+- _Ascending_ - specifying this style will double the scale into the next octave to ensure we have enough notes to create a noticeable ascension. As we create the melody every other note in is the next note in the key scale with the in between notes being randomly generated from the original key octave.
+- _Descending_ - similarly specifying this style doubles the scale into the next octave, but then reverses the scale and creates the melody.
+- _Mountain_ - This is a combination of ascending and descending styles. We double into the next octave and then create a melody that ascends up the scale and then down from the other end.
+
+**Refactoring Generating and adding waves**
+
+I once again refactored these because the output waveforms weren't great.. The way I was doing it before was leading to a lot of popping and clipping. Here is a comparison of the before and after. The top wave is what was being produced before and the bottom wave is after refactoring.
+
+![Compared waveforms](image.png)
+
+Here's what we do now:
+
+```
+def generate_wave(freq, duration):
+    if freq == 0:
+        return np.zeros(int(SAMPLE_RATE * duration), dtype=np.uint8)
+    t = np.linspace(0, duration, int(SAMPLE_RATE * duration), endpoint=False)
+    waveform = 0.5 * np.sign(np.sin(2 * np.pi * freq * t))
+    waveform = ((waveform + 1) * 127.5).astype(np.uint8)
+    return waveform
+
+def add_waves(wave1, wave2):
+    added_wave = wave1.astype(np.int16) + wave2.astype(np.int16)
+    max_amplitude = max(abs(added_wave.min()), abs(added_wave.max()))
+    normalized_wave = added_wave / max_amplitude * 0.8
+    return normalized_wave.astype(np.float32)
+```
+
+We generate a half-amplitude square wave. When we add multiple squarewaves we need to ensure we have a enough space so we cast them to uint16 when adding to prevent pooping or crunching. We normalize the resulting waverform by calculating the max amplitude and creating the final wave at 80% amplitude to ensure there isn't any clipping.
 
 ---
 
