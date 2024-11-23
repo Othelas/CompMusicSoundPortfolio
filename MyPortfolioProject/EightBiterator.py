@@ -1,5 +1,6 @@
 import argparse
 import numpy as np
+from numpy.fft import fft, ifft
 import sounddevice as sd
 from scipy.io.wavfile import write
 import time
@@ -92,7 +93,8 @@ def generate_wave(freq, duration):
     if freq == 0:
         return np.zeros(int(SAMPLE_RATE * duration), dtype=np.uint8)
     t = np.linspace(0, duration, int(SAMPLE_RATE * duration), endpoint=False)
-    waveform = 0.2 * np.sign(np.sin(2 * np.pi * freq * t))
+    waveform = 0.5 * np.sign(np.sin(2 * np.pi * freq * t))
+    # waveform -= np.mean(waveform)
     waveform = ((waveform + 1) * 127.5).astype(np.uint8)
     return waveform
 
@@ -105,8 +107,16 @@ def create_melody_waveform(key, duration, loops):
     full_wave = np.tile(full_wave, loops)
     return full_wave
 
-def play_wave(waveform):
-    sd.play(waveform.astype(np.float32) / 255.0 * 2 - 1, samplerate=SAMPLE_RATE)
+def play_wave(waveform, singular_wave):
+    # create a reduced amplitude wave for playback
+    # to match combined waveform amplitude
+    if singular_wave:
+        amplitude = 0.5
+        scaled_waveform = waveform.astype(np.float32) / 255.0 * 2 - 1
+        scaled_waveform *= amplitude
+    else:
+        scaled_waveform = waveform
+    sd.play(scaled_waveform, samplerate=SAMPLE_RATE)
     sd.wait()
 
 def generate_random_melody(key, length, npb):
@@ -119,9 +129,9 @@ def generate_random_melody(key, length, npb):
 
 def add_waves(wave1, wave2):
     added_wave = wave1.astype(np.int16) + wave2.astype(np.int16)
-    min_val, max_val = added_wave.min(), added_wave.max()
-    normalized_wave = (added_wave - min_val) / (max_val - min_val) * 255
-    return normalized_wave.astype(np.uint8)
+    max_amplitude = max(abs(added_wave.min()), abs(added_wave.max()))
+    normalized_wave = added_wave / max_amplitude * 0.8
+    return normalized_wave.astype(np.float32) 
 
 def get_attributes(args):
     attributes = "\n".join([f"{key}: {value}" for key, value in vars(args).items()])
@@ -145,7 +155,7 @@ def save_wave(attributes, waveform):
         print(f"Here's the attributes you used: {attribute_file}")
     elif save_the_file.lower() == "r":
         time.sleep(0.2)
-        play_wave(waveform)
+        play_wave(waveform, 0)
         save_wave(attributes, waveform)
     elif save_the_file.lower() == "n":
         save_chatter = random.randint(1,4)
@@ -212,7 +222,7 @@ if __name__ == "__main__":
     clear_line_and_print("Baking melody...5")
     wave1 = create_melody_waveform(melody1, calculate_note_length(args.bpm), args.loops)
     clear_line_and_print("Baking melody...4")
-    play_wave(wave1)
+    play_wave(wave1, 1)
 
     # generate second melody
     key_scale2 = octave_shift(generate_scale(args.key2), args.shift2)
@@ -220,12 +230,12 @@ if __name__ == "__main__":
     clear_line_and_print("Baking melody...3")
     wave2 = create_melody_waveform(melody2, calculate_note_length(args.bpm), args.loops)
     clear_line_and_print("Baking melody...2")
-    play_wave(wave2)
+    play_wave(wave2, 1)
 
     # add melodies
     clear_line_and_print("Baking melody...1")
     waveform = add_waves(wave1, wave2)
-    play_wave(waveform)
+    play_wave(waveform, 0)
     clear_line_and_print("Baking melody...DING!\n")
 
     # prompt save

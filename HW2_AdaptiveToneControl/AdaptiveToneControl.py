@@ -45,7 +45,7 @@ def AdjustTone(waveform, sample_rate):
 # Main program
 if __name__ == "__main__":
 
-    file_path = 'LunaLightMusicIdea.wav'
+    file_path = 'CatChase.wav'
     sample_rate, waveform = LoadWav(file_path)
     
     if len(waveform.shape) > 1:
