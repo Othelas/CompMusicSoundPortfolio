@@ -271,21 +271,23 @@ if __name__ == "__main__":
     parser.add_argument("--key1", type=str, default="G#m", help="Default: G#m | Key for melody 1.")
     parser.add_argument("--key2", help="Default: G#m | Key for melody 2.")
     parser.add_argument("--chord1", type=bool, default=True, help="Default: True | Set True for chord melody 1.")
-    parser.add_argument("--chord2", type=bool, default=False, help="Default: false | Set True for chord melody 2.")
-    parser.add_argument("--style1", type=str, default="random", help="Default: random | styles: random, linear, ascending, descending, mountain.")
+    parser.add_argument("--chord2", type=bool, default=False, help="Default: False | Set True for chord melody 2.")
+    parser.add_argument("--style1", type=str, default="mountain", help="Default: mountain | styles: random, linear, ascending, descending, mountain.")
     parser.add_argument("--style2", type=str, default="random", help="Default: random | Choose melody style.")
     parser.add_argument("--shift1", type=int, default=0, help="Default: 0 | Octave shift up or down for melody 1.")
     parser.add_argument("--shift2", type=int, default=-3, help="Default: -3 | Octave shift up or down for melody 2.")
-    parser.add_argument("--bpm", type=int, default=350, help="Default: 350 | Beats per minute.")
-    parser.add_argument("--bar", type=int, default=32, help="Default: 32 | Number of beats in a bar.")
+    parser.add_argument("--bpm", type=int, default=200, help="Default: 200 | Beats per minute.")
+    parser.add_argument("--bar", type=int, default=16, help="Default: 16 | Number of beats in a bar.")
     parser.add_argument("--loops", type=int, default=3, help="Default: 3 | Number of times the bar should loop.")
-    parser.add_argument("--npb1", type=int, default=24, help="Default: 24 | Notes per bar for melody 1.")
-    parser.add_argument("--npb2", type=int, default=16, help="Default: 16 | Notes per bar for melody 2.")
-    parser.add_argument("--smooth1", type=bool, default=False, help="Default: false | Set True for a smooth sound on melody 1.")
-    parser.add_argument("--smooth2", type=bool, default=False, help="Default: false | Set True for a smooth sound on melody 2.")
+    parser.add_argument("--npb1", type=int, default=12, help="Default: 12 | Notes per bar for melody 1.")
+    parser.add_argument("--npb2", type=int, default=8, help="Default: 8 | Notes per bar for melody 2.")
+    parser.add_argument("--smooth1", type=bool, default=False, help="Default: False | Set True for a smooth sound on melody 1.")
+    parser.add_argument("--smooth2", type=bool, default=False, help="Default: False | Set True for a smooth sound on melody 2.")
+    parser.add_argument("--double1", type=bool, default=False, help="Default: True | Set True to play melody 1 in double time.")
+    parser.add_argument("--double2", type=bool, default=False, help="Default: False | Set True to play melody 2 in double time.")
+
     
     args = parser.parse_args()
-
     # Set key2 to key1 if not provided
     if args.key2 is None:
         args.key2 = args.key1
@@ -307,25 +309,43 @@ if __name__ == "__main__":
         raise ValueError(f"Invalid style '{args.style2}'. Must be one of these: {', '.join(sorted(VALID_STYLES))}.")
     
     print("\nMelody attributes:")
-    print(f"\n     Melody 1 - Key: {args.key1} | Chord: {args.chord1} | Style: {args.style1} | Octave Shift: {args.shift1} | NPB: {args.npb1}")
-    print(f"\n     Melody 2 - Key: {args.key2} | Chord: {args.chord2} | Style: {args.style2} | Octave Shift: {args.shift2} | NPB: {args.npb2}")
+    print(f"\n     Melody 1")
+    print(f"     Key: {args.key1} | Chord: {args.chord1} | Style: {args.style1} | Smooth: {args.smooth1} | Octave Shift: {args.shift1} | NPB: {args.npb1} | Double Time: {args.double1}")
+    print(f"\n     Melody 2")
+    print(f"     Key: {args.key2} | Chord: {args.chord2} | Style: {args.style2} | Smooth: {args.smooth2} | Octave Shift: {args.shift2} | NPB: {args.npb2} | Double Time: {args.double2}")
     print(f"\n     BPM: {args.bpm} | BAR: {args.bar} | Loops: {args.loops}")
 
 
     # generate first melody
+    if args.double1:
+        bpm1 = args.bpm*2
+        bar1 = args.bar*2
+        npb1 = args.npb1*2
+    else:
+        bpm1 = args.bpm
+        bar1 = args.bar
+        npb1 = args.npb1
     key_scale1 = octave_shift(generate_scale(args.key1, args.chord1), args.shift1)
-    melody1 = generate_melody(key_scale1, args.bar, args.npb1, args.style1, args.chord1)
+    melody1 = generate_melody(key_scale1, bar1, npb1, args.style1, args.chord1)
     print("\n")
     clear_line_and_print("Preparing melody 1...")
-    wave1 = create_melody_waveform(melody1, calculate_note_length(args.bpm), args.loops, args.smooth1)
+    wave1 = create_melody_waveform(melody1, calculate_note_length(bpm1), args.loops, args.smooth1)
     clear_line_and_print("Generating melody 1...")
     play_wave(wave1, 1)
 
     # generate second melody
+    if args.double2:
+        bpm2 = args.bpm*2
+        bar2 = args.bar*2
+        npb2 = args.npb2*2
+    else:
+        bpm2 = args.bpm
+        bar2 = args.bar
+        npb2 = args.npb2
     key_scale2 = octave_shift(generate_scale(args.key2, args.chord2), args.shift2)
-    melody2 = generate_melody(key_scale2, args.bar, args.npb2, args.style2, args.chord2)
+    melody2 = generate_melody(key_scale2, bar2, npb2, args.style2, args.chord2)
     clear_line_and_print("Preparing melody 2...")
-    wave2 = create_melody_waveform(melody2, calculate_note_length(args.bpm), args.loops, args.smooth2)
+    wave2 = create_melody_waveform(melody2, calculate_note_length(bpm2), args.loops, args.smooth2)
     clear_line_and_print("Generating melody 2...")
     play_wave(wave2, 1)
 
