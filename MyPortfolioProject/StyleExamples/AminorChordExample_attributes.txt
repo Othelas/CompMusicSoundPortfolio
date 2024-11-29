@@ -1,0 +1,17 @@
+Attributes used in your melody:
+
+key1: Am
+key2: Dm
+chord1: True
+chord2: False
+style1: mountain
+style2: random
+shift1: 0
+shift2: -2
+bpm: 300
+bar: 32
+loops: 3
+npb1: 24
+npb2: 16
+smooth1: True
+smooth2: False

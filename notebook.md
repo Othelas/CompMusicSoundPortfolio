@@ -6,6 +6,44 @@
 
 ---
 
+### 11-26-2024
+
+**Final Portfolio Objective** My Portfolio Project already does many of the things in the final objective ;) Additionally I like the idea of adding melodies that stick to a particular chord rather than the entire scale so I think I'll add this in to my project.
+
+**Portfolio Project - Smooth wave**
+
+I decided to add an option to generate a "smooth" wave sound which also led to more refactoring of my generate wave function as well as adding in a low pass filter. The filter get's rid of some popping artifacts when generating a smooth wave.
+
+```
+def generate_wave(freq, duration, smooth):
+    if freq == 0:
+        return np.zeros(int(SAMPLE_RATE * duration), dtype=np.uint8)
+    t = np.linspace(0, duration, int(SAMPLE_RATE * duration), endpoint=False)
+    if smooth:
+        waveform = 0.5 * (np.sin(2 * np.pi * freq * t) + 1) * 255  # Sine wave scaled to [0, 255]
+    else:
+        waveform = 0.5 * np.sign(np.sin(2 * np.pi * freq * t))
+        waveform = ((waveform + 1) * 127.5).astype(np.uint8)  # Square wave scaled to [0, 255]
+    return waveform.astype(np.uint8)
+
+def create_melody_waveform(key, duration, loops, smooth):
+    full_wave = np.array([], dtype=np.uint8)
+    for note in key:
+        wave = generate_wave(note, duration, smooth)
+        full_wave = np.concatenate((full_wave, wave))
+        time.sleep(0.1)
+    full_wave = np.tile(full_wave, loops)
+    return apply_low_pass_filter(full_wave)
+
+def apply_low_pass_filter(waveform, cutoff=5000):
+    nyquist = 0.5 * SAMPLE_RATE
+    normal_cutoff = cutoff / nyquist
+    b, a = butter(5, normal_cutoff, btype='low', analog=False)
+    return filtfilt(b, a, waveform)
+```
+
+---
+
 ### 11-23-2024
 
 **Portfolio Project**

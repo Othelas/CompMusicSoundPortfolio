@@ -5,8 +5,9 @@ import sounddevice as sd
 from scipy.io.wavfile import write
 import time
 import random
-from datetime import datetime
 import math
+from scipy.signal import butter, filtfilt
+
 
 """
 Jesse M. Ellis - EightBiterator
@@ -32,28 +33,33 @@ VALID_STYLES = {
 
 # Chromatic scale from C4 - we will generate keys from this.
 CHROMATIC_SCALE = [
-    ('C4', 261.63),
-    ('C#4/Db4', 277.18),
-    ('D4', 293.66),
-    ('D#4/Eb4', 311.13),
-    ('E4', 329.63),
-    ('F4', 349.23),
-    ('F#4/Gb4', 369.99),
-    ('G4', 392.00),
-    ('G#4/Ab4', 415.30),
-    ('A4', 440.00),
-    ('A#4/Bb4', 466.16),
-    ('B4', 493.88)
+    ('C3', 130.81),
+    ('C#3/Db3', 138.59),
+    ('D3', 146.83),
+    ('D#3/Eb3', 155.56),
+    ('E3', 164.81),
+    ('F3', 174.61),
+    ('F#3/Gb3', 184.99),
+    ('G3', 196.00),
+    ('G#3/Ab3', 207.65),
+    ('A3', 220.00),
+    ('A#3/Bb3', 233.08),
+    ('B3', 246.94)
 ]
 
+MAJOR_CHORD_PATTERN = [4,3,5]
+MINOR_CHORD_PATTERN = [3,4,5]
 MAJOR_PATTERN = [2, 2, 1, 2, 2, 2, 1]
 MINOR_PATTERN = [2, 1, 2, 2, 1, 2, 2]
 
-def generate_scale(key_name):
+def generate_scale(key_name, chord):
     is_minor = key_name[-1].lower() == 'm'
     root_note = key_name[:-1] if is_minor else key_name
 
-    pattern = MINOR_PATTERN if is_minor else MAJOR_PATTERN
+    if chord:
+        pattern = MINOR_CHORD_PATTERN if is_minor else MAJOR_CHORD_PATTERN
+    else:
+        pattern = MINOR_PATTERN if is_minor else MAJOR_PATTERN
     
     root_index = None
     for idx, (note, _) in enumerate(CHROMATIC_SCALE):
@@ -93,22 +99,31 @@ def octave_shift(current_key, shift):
 def calculate_note_length(bpm):
     return 60 / bpm
 
-def generate_wave(freq, duration):
+def generate_wave(freq, duration, smooth):
     if freq == 0:
         return np.zeros(int(SAMPLE_RATE * duration), dtype=np.uint8)
     t = np.linspace(0, duration, int(SAMPLE_RATE * duration), endpoint=False)
-    waveform = 0.5 * np.sign(np.sin(2 * np.pi * freq * t))
-    waveform = ((waveform + 1) * 127.5).astype(np.uint8)
-    return waveform
+    if smooth:
+        waveform = 0.5 * (np.sin(2 * np.pi * freq * t) + 1) * 255  # Sine wave scaled to [0, 255]
+    else:
+        waveform = 0.5 * np.sign(np.sin(2 * np.pi * freq * t))
+        waveform = ((waveform + 1) * 127.5).astype(np.uint8)  # Square wave scaled to [0, 255]
+    return waveform.astype(np.uint8)
 
-def create_melody_waveform(key, duration, loops):
+def create_melody_waveform(key, duration, loops, smooth):
     full_wave = np.array([], dtype=np.uint8)
     for note in key:
-        wave = generate_wave(note, duration)
+        wave = generate_wave(note, duration, smooth)
         full_wave = np.concatenate((full_wave, wave))
         time.sleep(0.1)
     full_wave = np.tile(full_wave, loops)
-    return full_wave
+    return apply_low_pass_filter(full_wave)
+
+def apply_low_pass_filter(waveform, cutoff=5000):
+    nyquist = 0.5 * SAMPLE_RATE
+    normal_cutoff = cutoff / nyquist
+    b, a = butter(5, normal_cutoff, btype='low', analog=False)
+    return filtfilt(b, a, waveform)
 
 def play_wave(waveform, singular_wave):
     # create a reduced amplitude wave for playback
@@ -122,20 +137,24 @@ def play_wave(waveform, singular_wave):
     sd.play(scaled_waveform, samplerate=SAMPLE_RATE)
     sd.wait()
 
-def generate_melody(key, length, npb, style):
+def generate_melody(key, length, npb, style, chord):
     rest_notes = length - npb
     melody = []
     current_index = 0
     double_octave_key = key + octave_shift(key, 1)
     double_octave_key_reverse = double_octave_key[::-1]
+    if chord:
+        melody_key = double_octave_key
+    else:
+        melody_key = key
 
     if style == "random":
-        melody = [random.choice(key) for _ in range(npb - 1)]
+        melody = [random.choice(melody_key) for _ in range(npb - 1)]
     
     elif style == "linear":
         root_note_occurence = math.trunc(npb*0.75)
-        melody = [random.choice(key) for _ in range(npb - root_note_occurence)]
-        melody += [key[0]] * root_note_occurence
+        melody = [random.choice(melody_key) for _ in range(npb - root_note_occurence)]
+        melody += [melody_key[0]] * root_note_occurence
         random.shuffle(melody)
         if len(melody) == npb:
             melody = melody[:-1]
@@ -251,15 +270,19 @@ if __name__ == "__main__":
     You can also try the default by not specifying any attributes ;)""" )
     parser.add_argument("--key1", type=str, default="G#m", help="Default: G#m | Key for melody 1.")
     parser.add_argument("--key2", help="Default: G#m | Key for melody 2.")
+    parser.add_argument("--chord1", type=bool, default=True, help="Default: True | Set True for chord melody 1.")
+    parser.add_argument("--chord2", type=bool, default=False, help="Default: false | Set True for chord melody 2.")
     parser.add_argument("--style1", type=str, default="random", help="Default: random | styles: random, linear, ascending, descending, mountain.")
     parser.add_argument("--style2", type=str, default="random", help="Default: random | Choose melody style.")
-    parser.add_argument("--shift1", type=int, default=0, help="Default: 0 | Octave shift from middle (4) for melody 1.")
-    parser.add_argument("--shift2", type=int, default=-3, help="Default: -3 | Octave shift from middle (4) for melody 2.")
+    parser.add_argument("--shift1", type=int, default=0, help="Default: 0 | Octave shift up or down for melody 1.")
+    parser.add_argument("--shift2", type=int, default=-3, help="Default: -3 | Octave shift up or down for melody 2.")
     parser.add_argument("--bpm", type=int, default=350, help="Default: 350 | Beats per minute.")
     parser.add_argument("--bar", type=int, default=32, help="Default: 32 | Number of beats in a bar.")
     parser.add_argument("--loops", type=int, default=3, help="Default: 3 | Number of times the bar should loop.")
     parser.add_argument("--npb1", type=int, default=24, help="Default: 24 | Notes per bar for melody 1.")
     parser.add_argument("--npb2", type=int, default=16, help="Default: 16 | Notes per bar for melody 2.")
+    parser.add_argument("--smooth1", type=bool, default=False, help="Default: false | Set True for a smooth sound on melody 1.")
+    parser.add_argument("--smooth2", type=bool, default=False, help="Default: false | Set True for a smooth sound on melody 2.")
     
     args = parser.parse_args()
 
@@ -276,7 +299,7 @@ if __name__ == "__main__":
     
     if args.key2 not in VALID_KEYS:
         raise ValueError(f"Invalid key '{args.key2}'. Must be one of these: {', '.join(sorted(VALID_KEYS))}.")
-
+    
     if args.style1 not in VALID_STYLES:
         raise ValueError(f"Invalid style '{args.style1}'. Must be one of these: {', '.join(sorted(VALID_STYLES))}.")
     
@@ -284,25 +307,25 @@ if __name__ == "__main__":
         raise ValueError(f"Invalid style '{args.style2}'. Must be one of these: {', '.join(sorted(VALID_STYLES))}.")
     
     print("\nMelody attributes:")
-    print(f"\n     Melody 1 - Key: {args.key1} | Style: {args.style1} | Octave Shift: {args.shift1} | NPB: {args.npb1}")
-    print(f"\n     Melody 2 - Key: {args.key2} | Style: {args.style2} | Octave Shift: {args.shift2} | NPB: {args.npb2}")
+    print(f"\n     Melody 1 - Key: {args.key1} | Chord: {args.chord1} | Style: {args.style1} | Octave Shift: {args.shift1} | NPB: {args.npb1}")
+    print(f"\n     Melody 2 - Key: {args.key2} | Chord: {args.chord2} | Style: {args.style2} | Octave Shift: {args.shift2} | NPB: {args.npb2}")
     print(f"\n     BPM: {args.bpm} | BAR: {args.bar} | Loops: {args.loops}")
 
 
     # generate first melody
-    key_scale1 = octave_shift(generate_scale(args.key1), args.shift1)
-    melody1 = generate_melody(key_scale1, args.bar, args.npb1, args.style1)
+    key_scale1 = octave_shift(generate_scale(args.key1, args.chord1), args.shift1)
+    melody1 = generate_melody(key_scale1, args.bar, args.npb1, args.style1, args.chord1)
     print("\n")
     clear_line_and_print("Preparing melody 1...")
-    wave1 = create_melody_waveform(melody1, calculate_note_length(args.bpm), args.loops)
+    wave1 = create_melody_waveform(melody1, calculate_note_length(args.bpm), args.loops, args.smooth1)
     clear_line_and_print("Generating melody 1...")
     play_wave(wave1, 1)
 
     # generate second melody
-    key_scale2 = octave_shift(generate_scale(args.key2), args.shift2)
-    melody2 = generate_melody(key_scale2, args.bar, args.npb2, args.style2)
+    key_scale2 = octave_shift(generate_scale(args.key2, args.chord2), args.shift2)
+    melody2 = generate_melody(key_scale2, args.bar, args.npb2, args.style2, args.chord2)
     clear_line_and_print("Preparing melody 2...")
-    wave2 = create_melody_waveform(melody2, calculate_note_length(args.bpm), args.loops)
+    wave2 = create_melody_waveform(melody2, calculate_note_length(args.bpm), args.loops, args.smooth2)
     clear_line_and_print("Generating melody 2...")
     play_wave(wave2, 1)
 
