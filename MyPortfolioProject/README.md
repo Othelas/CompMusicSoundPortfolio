@@ -45,6 +45,15 @@ Generate melody with custom settings
 |--double1 | bool | True | Set True to play melody 1 in double time.
 |--double2 | bool | False | Set True to play melody 2 in double time.
 
+**Valid Key Inputs:**
+
+```
+"C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#",
+"Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B", "Cm",
+"C#m", "Dbm", "Dm", "D#m", "Ebm", "Em", "Fm", "F#m",
+"Gbm", "Gm", "G#m", "Abm", "Am", "A#m", "Bbm", "Bm"
+```
+
 **How to Use**
 
 1. Run the script:
@@ -76,4 +85,5 @@ Generate melody with custom settings
 `
 
 **Credits**
+
 Developed by Jesse M. Ellis as part of Computers, Music, and Sound coursework at PSU, Fall 2024.
